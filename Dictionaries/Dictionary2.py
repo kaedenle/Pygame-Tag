@@ -28,72 +28,40 @@
 #FUNCT: Associated function to run (defined in class, will repeat every call)
 #CAN_MOVE: Can you move while in state
     #Default is False
-PLAY_DICT = {
+STATE_DICT = {
 	"SWING":{
-	    "INTER":-1,
+	    "INTER":False,
 	    "FRAME_LEN":6,
 	    "INDEX":0,
             "WL":{"SWING2":True}
 	},
         "SWING2":{
-            "INTER":-1,
+            "INTER":False,
 	    "FRAME_LEN":10,
 	    "INDEX":3,
             "BL":{"CROUCH": True}
         },
         "DEFAULT":{
-            "INTER":0,
+            "INTER":True,
 	    "FRAME_LEN":1,
 	    "INDEX":4,
-            "FRAME":0,
-            "BL":{"SWING2":True},
-            "FUNCT":lambda self: self.correct()
+            "BL":{"SWING2":True}
         },
-        "RUNNING":{
-            "INTER":0,
+        "RUN_LEFT":{
+            "INTER":True,
 	    "FRAME_LEN":6,
 	    "INDEX":3,
-            "RESET":False,
             "LOOP": True,
             "BL":{"SWING2":True},
-            "CAN_MOVE": True
+            "FUNCT":lambda self: self.run_left()
         },
-        "CROUCH":{
-            "INTER":0,
-            "FRAME_LEN":3,
-            "INDEX":4,
-            "RESET": False,
-            "LOOP": False,
-            "FRAME":2,
-            "SPEED":0.35,
+        "RUN_RIGHT":{
+            "INTER":True,
+	    "FRAME_LEN":6,
+	    "INDEX":3,
+            "LOOP": True,
             "BL":{"SWING2":True},
-            "FUNCT":lambda self: self.crouch(),
-            "CAN_MOVE": True
-        },
-        "JUMP":{
-            "INTER":0,
-            "FRAME_LEN":5,
-            "INDEX":0,
-            "FRAME":4,
-            "RESET": False,
-            "LOOP": False,
-            "FUNCT":lambda self: self.jump(),
-            "CAN_MOVE": True
-        },
-        "DIVE":{
-            "INTER":-1,
-            "FRAME_LEN":6,
-            "INDEX": 2,
-            "SPEED":0.12,
-            "FUNCT":lambda self: self.dive(),
-            "CAN_MOVE": False
-            ,"WL":{"JUMP":True}
-        },
-        "AIRDASH":{
-            "INTER":-1,
-            "FRAME_LEN":5,
-            "INDEX": 0,
-            "FUNCT":lambda self: self.airDash()
+            "FUNCT":lambda self: self.run_right()
         }
 }
 
