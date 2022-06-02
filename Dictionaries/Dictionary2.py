@@ -62,6 +62,12 @@ STATE_DICT = {
             "LOOP": True,
             "BL":{"SWING2":True},
             "FUNCT":lambda self: self.run_right()
+        },
+        "JUMP":{
+            "INTER":False,
+	    "FRAME_LEN":6,
+	    "INDEX":0,
+            "FUNCT":lambda self: self.jump()
         }
 }
 
