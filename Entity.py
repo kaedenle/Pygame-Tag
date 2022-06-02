@@ -13,7 +13,7 @@ class Entity(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.spritesheet = spritesheet
         self.flipped = False
-        
+
         self.state = None
         #checks if state is different from last self.update_state call
         self.queued_state = None
@@ -28,6 +28,7 @@ class Entity(pygame.sprite.Sprite):
         self.a_x = 0
         self.scaling = 1
         self.physics = Physics(self.rect, [50, 50])
+        self.moving = False
         
         if self.spritesheet == None:
             self.image.fill((255, 0, 0))
@@ -79,7 +80,9 @@ class Entity(pygame.sprite.Sprite):
                 self.a_loop = False
             else:
                 self.a_loop = self.dict_data[self.state]["LOOP"]
-            
+                
+        if(self.state == None):
+            return
         #run the state function
         if("FUNCT" in self.dict_data[self.state]):
             self.dict_data[self.state]["FUNCT"](self)
@@ -87,9 +90,18 @@ class Entity(pygame.sprite.Sprite):
         #check if allowed to change state
         if(self.is_animating == False or self.interrupt == True):
             self.queued_state = state
-            #successful queue
             return True
-        #unsuccessful queue
+        #check if whitelist exists for state
+        if("WL" in self.dict_data[self.state]):
+            #change if state in whitelist and allowed to change state
+            if(state in self.dict_data[self.state]["WL"] and (self.is_animating == False or self.interrupt == True)):
+                self.queued_state = state
+                return True
+        #check if blacklist exists for state
+        if("BL" in self.dict_data[self.state]):
+            #change if state in blacklist
+            if(state in self.dict_data[self.state]["BL"]):
+                return False
         return False
             
     def update(self, dt):
@@ -102,13 +114,29 @@ class Player(Entity):
         self.controls = controls
     def default_state(self):
         #will add differnt set_states for airborne players
-        self.set_state("DEFAULT")
+        if(self.physics.grounded):
+            self.set_state("DEFAULT")
+        self.moving = False
     def run_right(self):
-        self.physics.acc.x += self.physics.speed
         self.flipped = False
+        if(self.moving):
+            self.run()
     def run_left(self):
-        self.physics.acc.x -= self.physics.speed
         self.flipped = True
+        if(self.moving):
+            self.run()
+    def run(self):
+        speed = self.physics.speed if self.physics.grounded else self.physics.airspeed
+        if(self.flipped):
+            self.physics.acc.x -= speed
+        else:
+            self.physics.acc.x += speed
+    def jump(self):
+        if(self.a_timer == 0):
+            self.physics.acc.y = -10.5
+            self.physics.grounded = False
+        if(self.moving):
+            self.run()
     def events(self, event):
         self.default_state()
         #physics values
@@ -118,14 +146,16 @@ class Player(Entity):
         #hold events
         keys = pygame.key.get_pressed()
         if keys[self.controls["MOVE_RIGHT"]]:
-            if(self.set_state("RUN_RIGHT")):
-                self.flipped = False
+            self.set_state("RUN_RIGHT")
+            self.moving = True
         elif keys[self.controls["MOVE_LEFT"]]:
-            if(self.set_state("RUN_LEFT")):
-                self.flipped = True
+            self.set_state("RUN_LEFT")
+            self.moving = True
         #single press events
         for e in event:
             if e.type == pygame.KEYDOWN:
+                if e.key == pygame.K_w:
+                    self.set_state("JUMP")
                 if e.key == pygame.K_SPACE:
                     self.set_state("SWING")
     def update(self, dt, event):
