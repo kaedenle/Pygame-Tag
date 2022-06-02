@@ -12,9 +12,12 @@ class Entity(pygame.sprite.Sprite):
         self.image = pygame.Surface((w, h))
         self.rect = self.image.get_rect()
         self.spritesheet = spritesheet
-        self.flipped = False
 
+        self.moving = False
+        self.locked = False
+        self.flipped = False
         self.state = None
+        self.interrupt = False
         #checks if state is different from last self.update_state call
         self.queued_state = None
         self.dict_data = states
@@ -23,12 +26,10 @@ class Entity(pygame.sprite.Sprite):
         self.a_length = 0
         self.a_speed = 0
         self.a_loop = False
-        self.interrupt = False
         self.is_animating = False
         self.a_x = 0
         self.scaling = 1
         self.physics = Physics(self.rect, [50, 50])
-        self.moving = False
         
         if self.spritesheet == None:
             self.image.fill((255, 0, 0))
@@ -81,6 +82,11 @@ class Entity(pygame.sprite.Sprite):
             else:
                 self.a_loop = self.dict_data[self.state]["LOOP"]
                 
+            if not ("LOCK" in self.dict_data[self.state]):
+                self.locked = True
+            else:
+                self.locked = self.dict_data[self.state]["LOCK"]
+                
         if(self.state == None):
             return
         #run the state function
@@ -117,14 +123,6 @@ class Player(Entity):
         if(self.physics.grounded):
             self.set_state("DEFAULT")
         self.moving = False
-    def run_right(self):
-        self.flipped = False
-        if(self.moving):
-            self.run()
-    def run_left(self):
-        self.flipped = True
-        if(self.moving):
-            self.run()
     def run(self):
         speed = self.physics.speed if self.physics.grounded else self.physics.airspeed
         if(self.flipped):
@@ -146,15 +144,19 @@ class Player(Entity):
         #hold events
         keys = pygame.key.get_pressed()
         if keys[self.controls["MOVE_RIGHT"]]:
-            self.set_state("RUN_RIGHT")
-            self.moving = True
+            self.set_state("RUN")
+            if not self.locked:
+                self.flipped = False
+                self.moving = True
         elif keys[self.controls["MOVE_LEFT"]]:
-            self.set_state("RUN_LEFT")
-            self.moving = True
+            self.set_state("RUN")
+            if not self.locked:
+                self.flipped = True
+                self.moving = True
         #single press events
         for e in event:
             if e.type == pygame.KEYDOWN:
-                if e.key == pygame.K_w:
+                if e.key == pygame.K_w and self.physics.grounded:
                     self.set_state("JUMP")
                 if e.key == pygame.K_SPACE:
                     self.set_state("SWING")
