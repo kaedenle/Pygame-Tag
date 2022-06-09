@@ -160,8 +160,8 @@ class Player(Entity):
                     self.set_state("JUMP")
                 if e.key == pygame.K_SPACE:
                     self.set_state("SWING")
-    def update(self, dt, event):
+    def update(self, dt, event, level):
         self.update_animation()
         self.events(event)
         self.update_state()
-        self.physics.update(dt)
+        self.physics.update(dt, level)

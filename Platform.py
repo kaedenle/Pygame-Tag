@@ -22,16 +22,17 @@ class Platform(pygame.sprite.Sprite):
         #print(int(y * (self.w/scale)), " ", int(x * (self.h/scale)))
         self.rect.topleft = [int(col * (self.w/scale)), int(row * (self.h/scale))]
         image = pygame.transform.scale(image, (int(self.w/scale), int(self.h/scale)))
-        image.fill((0, 0, 0))
+        image.fill((255, 0, 0))
         return image
     
 class Level:
-    def __init__(self, num, TILE_SIZE):
-        self.platList = pygame.sprite.Group()
-        self.level_num = num
+    def __init__(self, TILE_SIZE, num = 0):
+        self.plat_list = pygame.sprite.Group()
         self.level = []
         #each tile is 'size x size' (default is 16)
         self.TILE_SIZE = TILE_SIZE
+        self.level_num = num
+        self.init()
     def load_level(self):
         #read from csv file
         level = []
@@ -53,10 +54,10 @@ class Level:
         self.level = self.load_level()
         self.create_plats()
     def create_plats(self):
-        self.platList.empty()
+        self.plat_list.empty()
         for row, rows in enumerate(self.level):
             for col, tile in enumerate(rows):
                 if(tile != 0):
                     platform = Platform(row, col, self.TILE_SIZE, self.TILE_SIZE)
                     platform.get_image(row, col, 1)
-                    self.platList.add(platform)
+                    self.plat_list.add(platform)
