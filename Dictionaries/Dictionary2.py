@@ -48,6 +48,8 @@ STATE_DICT = {
             "INTER":False,
 	    "FRAME_LEN":6,
 	    "INDEX":0,
+            "WL":{"DEFAULT": True},
+            "BL":{"RUN": True, "SWING":True},
             "FUNCT":lambda self: self.jump(),
             "LOCK": False
         }

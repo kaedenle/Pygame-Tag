@@ -28,7 +28,7 @@ filename = find("SS2(2)(64x64).png")
 
 class Game:
     def __init__(self):
-        self.level = Level(size, 1)
+        self.level = Level(size, 0)
         self.player = Player(64, 64, STATE_DICT, CONTROLS_DICT, filename)
         sprites.add(self.player)
         self.event = None
@@ -54,6 +54,7 @@ while True:
     pygame.display.update()
     dt = clock.tick(60) * .001 * TARGET_FPS
     screen.fill(WHITE)
-    pygame.draw.rect(screen, RED, game.player.rect)
+    #pygame.draw.rect(screen, RED, game.player.rect)
+    pygame.draw.rect(screen, BLUE, game.player.AABB)
     sprites.draw(screen)
     game.update(dt)

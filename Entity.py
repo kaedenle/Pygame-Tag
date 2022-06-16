@@ -11,6 +11,7 @@ class Entity(pygame.sprite.Sprite):
         self.height = h
         self.image = pygame.Surface((w, h))
         self.rect = self.image.get_rect()
+        self.AABB = pygame.Rect((0, 0), (23, 40))
         self.spritesheet = spritesheet
 
         self.moving = False
@@ -29,7 +30,7 @@ class Entity(pygame.sprite.Sprite):
         self.is_animating = False
         self.a_x = 0
         self.scaling = 1
-        self.physics = Physics(self.rect, [50, 50])
+        self.physics = Physics(self.AABB, [50, 50])
         
         if self.spritesheet == None:
             self.image.fill((255, 0, 0))
@@ -99,8 +100,8 @@ class Entity(pygame.sprite.Sprite):
             return True
         #check if whitelist exists for state
         if("WL" in self.dict_data[self.state]):
-            #change if state in whitelist and allowed to change state
-            if(state in self.dict_data[self.state]["WL"] and (self.is_animating == False or self.interrupt == True)):
+            #change if state in whitelist
+            if(state in self.dict_data[self.state]["WL"]):
                 self.queued_state = state
                 return True
         #check if blacklist exists for state
@@ -110,9 +111,9 @@ class Entity(pygame.sprite.Sprite):
                 return False
         return False
             
-    def update(self, dt):
+    def update(self, dt, level):
         self.a_loop()
-        self.physics.update(dt)
+        self.physics.update(dt, level, self.rect)
 
 class Player(Entity):
     def __init__(self, w, h, states, controls, spritesheet = None):
@@ -164,4 +165,4 @@ class Player(Entity):
         self.update_animation()
         self.events(event)
         self.update_state()
-        self.physics.update(dt, level)
+        self.physics.update(dt, level, self.rect)
