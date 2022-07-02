@@ -5,22 +5,23 @@ from Physics import Physics
 pygame.init()
 
 class Entity(pygame.sprite.Sprite):
-    def __init__(self, w, h, states, spritesheet = None):
+    def __init__(self, w, h, states, level, spritesheet = None):
         pygame.sprite.Sprite.__init__(self)
         self.width = w
         self.height = h
         self.image = pygame.Surface((w, h))
         self.rect = self.image.get_rect()
-        self.AABB = pygame.Rect((0, 0), (23, 40))
+        self.AABB_height = 40
+        self.AABB = pygame.Rect((0, 0), (23, self.AABB_height))
         self.spritesheet = spritesheet
 
         self.moving = False
         self.locked = False
         self.flipped = False
-        self.state = None
+        self.state = "DEFAULT"
         self.interrupt = False
         #checks if state is different from last self.update_state call
-        self.queued_state = None
+        self.queued_state = "DEFAULT"
         self.dict_data = states
         
         self.a_timer = 0
@@ -30,6 +31,7 @@ class Entity(pygame.sprite.Sprite):
         self.is_animating = False
         self.a_x = 0
         self.scaling = 1
+        self.level = level
         self.physics = Physics(self.AABB, [50, 50])
         
         if self.spritesheet == None:
@@ -94,10 +96,6 @@ class Entity(pygame.sprite.Sprite):
         if("FUNCT" in self.dict_data[self.state]):
             self.dict_data[self.state]["FUNCT"](self)
     def set_state(self, state):
-        #check if allowed to change state
-        if(self.is_animating == False or self.interrupt == True):
-            self.queued_state = state
-            return True
         #check if whitelist exists for state
         if("WL" in self.dict_data[self.state]):
             #change if state in whitelist
@@ -109,33 +107,67 @@ class Entity(pygame.sprite.Sprite):
             #change if state in blacklist
             if(state in self.dict_data[self.state]["BL"]):
                 return False
+        #check if allowed to change state
+        if(self.is_animating == False or self.interrupt == True):
+            self.queued_state = state
+            return True
         return False
             
-    def update(self, dt, level):
-        self.a_loop()
-        self.physics.update(dt, level, self.rect)
+    def update(self, dt):
+        self.update_animation()
+        self.physics.update(dt, self.level, self.rect)
 
 class Player(Entity):
-    def __init__(self, w, h, states, controls, spritesheet = None):
-        Entity.__init__(self, w, h, states, spritesheet)
+    def __init__(self, w, h, states, level, controls, spritesheet = None):
+        Entity.__init__(self, w, h, states, level, spritesheet)
         self.controls = controls
     def default_state(self):
+        #if there's a block above you don't uncrouch
+        crouch_states = ["CROUCH", "CRAWL", "SLIDE"]
+        uncrouch = True
+        if(self.AABB.height == self.AABB_height/2 and not self.is_animating):
+            uncrouched_index = math.floor((self.physics.pos.y - self.AABB_height/2)/self.level.TILE_SIZE)
+            left = math.floor((self.physics.pos.x)/self.level.TILE_SIZE)
+            right = math.floor((self.physics.pos.x + self.AABB.width)/self.level.TILE_SIZE)
+            for x in range(left, right + 1):
+                if(self.level.level[uncrouched_index][x] == 1):
+                    uncrouch = False
+                    break
+            if not uncrouch:
+                self.set_state("CROUCH")
         #will add differnt set_states for airborne players
         if(self.physics.grounded):
             self.set_state("DEFAULT")
+        #correct hurtbox if not in crouching state
+        if(self.state not in crouch_states and self.AABB.height == self.AABB_height/2):
+            self.AABB.y -= self.AABB_height/2
+            self.AABB.height = self.AABB_height
+        #reset movement before entering events
         self.moving = False
-    def run(self):
-        speed = self.physics.speed if self.physics.grounded else self.physics.airspeed
+    def run(self, speed = -1):
+        if(speed < 0):
+            speed = self.physics.speed if self.physics.grounded else self.physics.airspeed
         if(self.flipped):
             self.physics.acc.x -= speed
         else:
             self.physics.acc.x += speed
     def jump(self):
         if(self.a_timer == 0):
-            self.physics.acc.y = -10.5
+            self.physics.acc.y = -8.5
             self.physics.grounded = False
         if(self.moving):
             self.run()
+    def crouch(self):
+        if(self.AABB.height == self.AABB_height):
+            self.AABB.height = self.AABB_height/2
+            self.physics.pos.y += self.AABB_height/2
+    def slide(self):
+        if(self.AABB.height == self.AABB_height):
+            self.AABB.height = self.AABB_height/2
+            self.physics.pos.y += self.AABB_height/2
+        self.run(0.9)
+        if not(self.is_animating):
+            self.default()
     def events(self, event):
         self.default_state()
         #physics values
@@ -154,6 +186,11 @@ class Player(Entity):
             if not self.locked:
                 self.flipped = True
                 self.moving = True
+        if keys[self.controls["CROUCH"]]:
+            if(self.state != "RUN"):
+                self.set_state("CROUCH")
+            if(self.state == "RUN"):
+                self.set_state("SLIDE")
         #single press events
         for e in event:
             if e.type == pygame.KEYDOWN:
@@ -161,8 +198,9 @@ class Player(Entity):
                     self.set_state("JUMP")
                 if e.key == pygame.K_SPACE:
                     self.set_state("SWING")
-    def update(self, dt, event, level):
+    def update(self, dt, event):
         self.update_animation()
         self.events(event)
         self.update_state()
-        self.physics.update(dt, level, self.rect)
+        print(self.state)
+        self.physics.update(dt, self.level, self.rect)

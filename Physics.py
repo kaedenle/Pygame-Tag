@@ -35,10 +35,9 @@ class Physics:
             if(value >= minimum and value < maximum):
                 return True
             return False
-        collisions = [False, False, False, False]
+        flag = False
         #vel not optimal due to kinematic equation involving adding acceleration
         delta_x = self.pos.x - self.rect.x
-        delta_y = self.pos.y - self.rect.y
         if(delta_x != 0):
             #initial pos
             start_x = get_index(self.rect.x + self.rect.width) if delta_x > 0 else get_index(self.rect.x)
@@ -49,14 +48,38 @@ class Physics:
             height_end = get_index(self.rect.y + self.rect.height - 1)
             count = 1 if delta_x > 0 else -1
             result = math.inf
-            
+            result2 = math.inf
             for col in range(start_x, end_x + count, count):
                 if(result != math.inf):
                     break
                 for row in range(height_start, height_end + 1):
                     if(in_range(row, 0, len(level.level)) and in_range(col, 0, len(level.level[0])) and level.level[row][col] == 1):
                         result = col
+                        result2 = row
                         break
+            #for slopes
+            top = get_index(self.rect.y)
+            bottom = get_index(self.rect.y + self.rect.height)
+            left = get_index(self.rect.x)
+            right = get_index(self.rect.x + self.rect.width) + 1
+            floor = False
+            ceiling = False
+            
+            for x in range(left, right):
+                if(level.level[bottom][x] == 1):
+                    floor = True
+                if(level.level[top - 1][x] == 1):
+                    ceiling = True
+                    break
+            #no gaps between next slope block and current one
+            if(bottom - 1 == result2 and level.level[result2 + 1][result - count] != 1):
+                floor = False
+            #if there's ground below you and there isn't a block above you
+            if(result != math.inf and bottom - 1 == result2 and floor and not ceiling):
+                result = math.inf
+                curpos = self.rect.y
+                self.rect.y = curpos - level.TILE_SIZE
+                flag = True
             if(result != math.inf):
                 self.vel.x = 0
                 if(delta_x > 0):
@@ -65,7 +88,7 @@ class Physics:
                 else:
                     if((result * level.TILE_SIZE) + level.TILE_SIZE > self.pos.x):
                         self.pos.x = (result * level.TILE_SIZE) + level.TILE_SIZE
-                        
+        delta_y = self.pos.y - self.rect.y            
         if(delta_y != 0):
             #initial pos
             start_y = get_index(self.rect.y + self.rect.height) if delta_y > 0 else get_index(self.rect.y)
@@ -91,6 +114,7 @@ class Physics:
                     if(result * level.TILE_SIZE < self.pos.y + self.rect.height):
                         self.pos.y = (result * level.TILE_SIZE) - self.rect.height
                         self.grounded = True
+        
                 else:
                     #hit ceiling or not
                     if((result * level.TILE_SIZE) + level.TILE_SIZE > self.pos.y):

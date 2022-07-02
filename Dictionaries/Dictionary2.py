@@ -33,7 +33,7 @@ STATE_DICT = {
             "INTER":True,
 	    "FRAME_LEN":1,
 	    "INDEX":4,
-            "BL":{"SWING2":True}
+            "BL":{"SWING2":True},
         },
         "RUN":{
             "INTER":True,
@@ -52,6 +52,25 @@ STATE_DICT = {
             "BL":{"RUN": True, "SWING":True},
             "FUNCT":lambda self: self.jump(),
             "LOCK": False
+        },
+        "CROUCH":{
+            "INTER":False,
+	    "FRAME_LEN":3,
+	    "INDEX":4,
+            "WL":{"JUMP": True, "SLIDE": True},
+            "BL":{"RUN": True},
+            "FUNCT":lambda self: self.crouch(),
+            "LOCK": True,
+            "SPEED": 0.5
+        },
+        "SLIDE":{
+            "INTER":False,
+	    "FRAME_LEN":6,
+	    "INDEX":2,
+            "WL":{"JUMP": True},
+            "FUNCT":lambda self: self.slide(),
+            "LOCK": True,
+            "SPEED": 0.25
         }
 }
 

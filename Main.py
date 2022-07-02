@@ -29,7 +29,7 @@ filename = find("SS2(2)(64x64).png")
 class Game:
     def __init__(self):
         self.level = Level(size, 0)
-        self.player = Player(64, 64, STATE_DICT, CONTROLS_DICT, filename)
+        self.player = Player(64, 64, STATE_DICT, self.level, CONTROLS_DICT, filename)
         sprites.add(self.player)
         self.event = None
         
@@ -46,7 +46,7 @@ class Game:
                         print("")"""
     def update(self, dt):
         self.events()
-        self.player.update(dt, self.event, self.level)
+        self.player.update(dt, self.event)
         self.level.plat_list.draw(screen)
 
 game = Game()
